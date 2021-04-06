@@ -31,7 +31,8 @@ with open(args.queryFile) as fp:
     line = fp.readline()
     while line:
         line = line.strip()
-        line = line[1:len(line)-1]
+        if line[0] == "'" and line[len(line)-1] == "'":
+            line = line[1:len(line)-1]
         line = line.replace('"','')
         user_query = query.Query(query = line,
                         cert_path = cert, key_path = key, ca_cert=cacert, key_password=key_pass, url=url )
