@@ -18,8 +18,17 @@ class ResultSet:
     operation_time = 0
     wall_time = 0
     result_size = 0
+    page_times = []
+    events = []
     def __init__(self) -> None:
         self.operation_time = 0
+    
+    def reset(self) -> None:
+        has_results=False
+        operation_time=0
+        wall_time=0
+        result_size=0
+        events=[]
         
 class Query:
 
@@ -97,6 +106,33 @@ class Query:
                  "auths" : self.auths,
                  "columnVisibility" : self.visibility}
 
+    def next(self, url : str = None):
+        if not self.current_result_set:
+            raise RuntimeError("No Running Query")
+        if not self.current_result_set.has_results:
+            return self.current_result_set
+        if not url:
+            url = "/DataWave/Query/" + self.current_result_set.query_id + "/next"
+
+        headers = {'content-type': self.default_content_type, 'Accept': self.json_content_type}
+        connection = self._load_client()
+        start_time = time.time()
+        connection.request("GET",url,None, headers)
+        response = connection.getresponse()
+        log.debug("Response code is " + str(response.getcode()))
+        self.current_result_set.reset()
+        if response.getcode() == 200:
+            decoded_response = response.read().decode()
+            json_response = json.loads(decoded_response)
+            self.current_result_set.has_results = json_response.get('HasResults',False)
+            self.current_result_set.operation_time = json_response.get('OperationTimeMS',0)
+            self.current_result_set.result_size = json_response.get('ReturnedEvents',0)
+            self.current_result_set.events = json_response.get('Events',[])
+            log.info("Received a 200 response code for " + self.current_result_set.query_id + " in " + str(self.current_result_set.operation_time) + " ms")
+        self.current_result_set.wall_time = (time.time()-start_time)*1000
+        self.current_result_set.page_times.append( self.current_result_set.wall_time )
+        return self.current_result_set
+
     def create(self, url : str = None):
         if not url:
             url = "/DataWave/Query/" + self.query_logic + "/createAndNext"
@@ -113,7 +149,10 @@ class Query:
             json_response = json.loads(decoded_response)
             self.current_result_set.has_results = json_response.get('HasResults',False)
             self.current_result_set.query_id = json_response.get('QueryId',None)
+            self.current_result_set.events = json_response.get('Events',[])
             self.current_result_set.operation_time = json_response.get('OperationTimeMS',0)
+            self.current_result_set.result_size = json_response.get('ReturnedEvents',0)
             log.info("Received a 200 response code for " + self.current_result_set.query_id + " in " + str(self.current_result_set.operation_time) + " ms")
         self.current_result_set.wall_time = (time.time()-start_time)*1000
+        self.current_result_set.page_times.append( self.current_result_set.wall_time )
         return self.current_result_set
