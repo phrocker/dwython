@@ -8,8 +8,17 @@ import json
 import logging
 
 
+
 log = logging.getLogger(__name__)
 
+class ResultSet:
+    has_results = False
+    query_id = None
+    operation_time = 0
+
+    def __init__(self) -> None:
+        self.operation_time = 0
+        
 class Query:
 
     query_logic = "EventQuery"
@@ -23,7 +32,7 @@ class Query:
 
     url = 'https://localhost:8443/DataWave'
 
-    query_id = None
+    current_result_set = None
 
     user_query = None
 
@@ -49,17 +58,17 @@ class Query:
         self.key_pass = key_password
 
     def __del__(self):
-        if self.query_id is not None:
+        if self.current_result_set is not None:
             self.close()
 
     def close(self, url : str = None):
         # close
-        if self.query_id is not None:
+        if self.current_result_set is not None and self.current_result_set.query_id is not None:
             if not url:
-                url = "/DataWave/Query/" + self.query_id + "/close"
-            log.info("Closing query " + self.query_id)
+                url = "/DataWave/Query/" + self.current_result_set.query_id + "/close"
+            log.info("Closing query " + self.current_result_set.query_id)
             self._load_client().request(method="PUT",url=url)
-            self.query_id = None
+            self.current_result_set.query_id = None
 
     def _load_client(self):
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
@@ -91,9 +100,17 @@ class Query:
         params = urllib.parse.urlencode(self._build_query())
         connection.request("POST",url,params, headers)
         response = connection.getresponse()
+        log.debug("Response code is " + str(response.getcode()))
         if response.getcode() == 200:
             decoded_response = response.read().decode()
+            self.current_result_set = ResultSet()
             json_response = json.loads(decoded_response)
             has_results = json_response.get('HasResults',False)
-            self.query_id = json_response.get('QueryId',None)
-            log.info("Received a 200 response code for " + self.query_id)
+            self.current_result_set.query_id = json_response.get('QueryId',None)
+            self.current_result_set.operation_time = json_response.get('OperationTimeMS',0)
+            log.info("Received a 200 response code for " + self.current_result_set.query_id + " in " + str(self.current_result_set.time) + " ms")
+            return self.current_result_set
+        elif response.getcode() == 204:
+            self.current_result_set = ResultSet()
+            return self.current_result_set
+        return None
