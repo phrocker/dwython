@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='dwython',
-    version='0.1.2',
+    version='0.1.3',
     description='Datawave Python API',
     url='https://github.com/phrocker/dwython',
     author='Marc Parisi',
