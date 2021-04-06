@@ -17,6 +17,7 @@ class ResultSet:
     query_id = None
     operation_time = 0
     wall_time = 0
+    result_size = 0
     def __init__(self) -> None:
         self.operation_time = 0
         
@@ -109,11 +110,10 @@ class Query:
         self.current_result_set = ResultSet()
         if response.getcode() == 200:
             decoded_response = response.read().decode()
-            
             json_response = json.loads(decoded_response)
-            has_results = json_response.get('HasResults',False)
+            self.current_result_set.has_results = json_response.get('HasResults',False)
             self.current_result_set.query_id = json_response.get('QueryId',None)
             self.current_result_set.operation_time = json_response.get('OperationTimeMS',0)
-            log.info("Received a 200 response code for " + self.current_result_set.query_id + " in " + str(self.current_result_set.time) + " ms")
+            log.info("Received a 200 response code for " + self.current_result_set.query_id + " in " + str(self.current_result_set.operation_time) + " ms")
         self.current_result_set.wall_time = (time.time()-start_time)*1000
         return self.current_result_set
