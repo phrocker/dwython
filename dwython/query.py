@@ -6,6 +6,7 @@ import http.client
 from urllib.parse import urlparse
 import json
 import logging
+import time
 
 
 
@@ -15,7 +16,7 @@ class ResultSet:
     has_results = False
     query_id = None
     operation_time = 0
-
+    wall_time = 0
     def __init__(self) -> None:
         self.operation_time = 0
         
@@ -46,7 +47,7 @@ class Query:
     key_pass = None
 
     auths = "PUBLIC,PRIVATE,FOO,BAR,DEF,A,B,C,D,E,F,G,H,I,DW_USER,DW_SERV,DW_ADMIN,JBOSS_ADMIN"
-    def __init__(self, query : str, cert_path : str, key_path : str, ca_cert : str, key_password : str = None, name : str = None) -> None:
+    def __init__(self, query : str, cert_path : str, key_path : str, ca_cert : str, key_password : str = None, url : str = None, name : str = None) -> None:
         self.user_query = query
         if not name:
             self.query_name = str(uuid.uuid1())
@@ -56,6 +57,9 @@ class Query:
         self.key_path = key_path
         self.ca_cert  = ca_cert
         self.key_pass = key_password
+
+        if url is not None:
+            self.url = url
 
     def __del__(self):
         if self.current_result_set is not None:
@@ -98,19 +102,18 @@ class Query:
         headers = {'content-type': self.default_content_type, 'Accept': self.json_content_type}
         connection = self._load_client()
         params = urllib.parse.urlencode(self._build_query())
+        start_time = time.time()
         connection.request("POST",url,params, headers)
         response = connection.getresponse()
         log.debug("Response code is " + str(response.getcode()))
+        self.current_result_set = ResultSet()
         if response.getcode() == 200:
             decoded_response = response.read().decode()
-            self.current_result_set = ResultSet()
+            
             json_response = json.loads(decoded_response)
             has_results = json_response.get('HasResults',False)
             self.current_result_set.query_id = json_response.get('QueryId',None)
             self.current_result_set.operation_time = json_response.get('OperationTimeMS',0)
             log.info("Received a 200 response code for " + self.current_result_set.query_id + " in " + str(self.current_result_set.time) + " ms")
-            return self.current_result_set
-        elif response.getcode() == 204:
-            self.current_result_set = ResultSet()
-            return self.current_result_set
-        return None
+        self.current_result_set.wall_time = (time.time()-start_time)*1000
+        return self.current_result_set

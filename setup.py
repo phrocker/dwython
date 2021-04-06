@@ -2,9 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name='dwython',
-    version='0.1',
+    version='0.1.2',
     description='Datawave Python API',
-    url='https://github.com/phrocker/c2api',
+    url='https://github.com/phrocker/dwython',
     author='Marc Parisi',
 
     classifiers=[
@@ -25,5 +25,5 @@ setup(
 
     packages=find_packages(),
 
-    install_requires=['requests'],
+    install_requires=['requests', 'certifi', 'chardet', 'idna', 'urllib3'],
 )
