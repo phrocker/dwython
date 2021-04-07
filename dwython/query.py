@@ -30,7 +30,7 @@ class ResultSet:
         result_size=0
         events=[]
         
-class Query:
+class Query(object):
 
     query_logic = "EventQuery"
     begin_date = "19700101"
@@ -56,8 +56,10 @@ class Query:
     ca_cert = None
     key_pass = None
 
+    endpoint = "/DataWave/Query/"
+
     auths = "PUBLIC,PRIVATE,FOO,BAR,DEF,A,B,C,D,E,F,G,H,I,DW_USER,DW_SERV,DW_ADMIN,JBOSS_ADMIN"
-    def __init__(self, query : str, cert_path : str, key_path : str, ca_cert : str, key_password : str = None, url : str = None, name : str = None) -> None:
+    def __init__(self, query : str, cert_path : str = None, key_path : str = None, ca_cert : str = None, key_password : str = None, url : str = None, name : str = None) -> None:
         self.user_query = query
         if not name:
             self.query_name = str(uuid.uuid1())
@@ -70,6 +72,17 @@ class Query:
 
         if url is not None:
             self.url = url
+            
+    def with_url(self, url : str):
+        if url is not None:
+            self.url = url
+        return self
+
+    def with_cert(self, cert_path : str, key_path : str, key_password : str = None):
+        self.cert_path = cert_path 
+        self.key_path = key_path
+        self.key_pass = key_password
+        return self
 
     def __del__(self):
         if self.current_result_set is not None:
@@ -79,14 +92,15 @@ class Query:
         # close
         if self.current_result_set is not None and self.current_result_set.query_id is not None:
             if not url:
-                url = "/DataWave/Query/" + self.current_result_set.query_id + "/close"
+                url = self.endpoint + self.current_result_set.query_id + "/close"
             log.info("Closing query " + self.current_result_set.query_id)
             self._load_client().request(method="PUT",url=url)
             self.current_result_set.query_id = None
 
     def _load_client(self):
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        context.load_cert_chain(certfile=self.cert_path, keyfile=self.key_path ,password=self.key_pass)
+        if self.cert_path is not None:
+            context.load_cert_chain(certfile=self.cert_path, keyfile=self.key_path ,password=self.key_pass)
         if self.ca_cert is not None:
             context.load_verify_locations(cafile=self.ca_cert)
         else:
@@ -112,7 +126,7 @@ class Query:
         if not self.current_result_set.has_results:
             return self.current_result_set
         if not url:
-            url = "/DataWave/Query/" + self.current_result_set.query_id + "/next"
+            url = self.endpoint + self.current_result_set.query_id + "/next"
 
         headers = {'content-type': self.default_content_type, 'Accept': self.json_content_type}
         connection = self._load_client()
@@ -135,7 +149,7 @@ class Query:
 
     def create(self, url : str = None):
         if not url:
-            url = "/DataWave/Query/" + self.query_logic + "/createAndNext"
+            url = self.endpoint + self.query_logic + "/createAndNext"
         headers = {'content-type': self.default_content_type, 'Accept': self.json_content_type}
         connection = self._load_client()
         params = urllib.parse.urlencode(self._build_query())

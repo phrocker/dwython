@@ -7,7 +7,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='dwython',
-    version='0.1.5',
+    version='0.1.6',
     description='Datawave Python API',
     long_description=long_description,
     long_description_content_type='text/markdown',
