@@ -60,6 +60,8 @@ class Query(object):
 
     endpoint = "/DataWave/Query/"
 
+    query_syntax =  'LUCENE'
+
     auths = "PUBLIC,PRIVATE,FOO,BAR,DEF,A,B,C,D,E,F,G,H,I,DW_USER,DW_SERV,DW_ADMIN,JBOSS_ADMIN"
     def __init__(self, query : str, cert_path : str = None, key_path : str = None, ca_cert : str = None, key_password : str = None, url : str = None, name : str = None) -> None:
         self.user_query = query
@@ -84,6 +86,22 @@ class Query(object):
         self.cert_path = cert_path 
         self.key_path = key_path
         self.key_pass = key_password
+        return self
+
+    def with_begin(self, begin : str):
+        self.begin_date = begin
+        return self
+
+    def with_end(self, end : str):
+        self.end_date = end
+        return self
+
+    def with_query_logic(self, logic: str):
+        self.query_logic = logic
+        return self
+
+    def with_syntax(self, syntax: str):
+        self.query_syntax = syntax
         return self
 
     def __del__(self):
@@ -118,7 +136,7 @@ class Query(object):
                  "begin" : self.begin_date,
                  "end" : self.end_date,
                  "pagesize": 10,
-                 "query.syntax" : "LUCENE",
+                 "query.syntax" : self.query_syntax,
                  "auths" : self.auths,
                  "columnVisibility" : self.visibility}
 
