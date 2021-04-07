@@ -20,6 +20,7 @@ class ResultSet:
     result_size = 0
     page_times = []
     events = []
+    reponse_code=204
     def __init__(self) -> None:
         self.operation_time = 0
     
@@ -29,6 +30,7 @@ class ResultSet:
         wall_time=0
         result_size=0
         events=[]
+        response_code=204
         
 class Query(object):
 
@@ -72,7 +74,7 @@ class Query(object):
 
         if url is not None:
             self.url = url
-            
+
     def with_url(self, url : str):
         if url is not None:
             self.url = url
@@ -135,6 +137,7 @@ class Query(object):
         response = connection.getresponse()
         log.debug("Response code is " + str(response.getcode()))
         self.current_result_set.reset()
+        self.current_result_set.reponse_code = response.getcode()
         if response.getcode() == 200:
             decoded_response = response.read().decode()
             json_response = json.loads(decoded_response)
@@ -158,6 +161,7 @@ class Query(object):
         response = connection.getresponse()
         log.debug("Response code is " + str(response.getcode()))
         self.current_result_set = ResultSet()
+        self.current_result_set.reponse_code = response.getcode()
         if response.getcode() == 200:
             decoded_response = response.read().decode()
             json_response = json.loads(decoded_response)
