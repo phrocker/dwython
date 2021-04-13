@@ -90,7 +90,7 @@ class Query(object):
 
     query_syntax =  'LUCENE'
 
-    auths = "PUBLIC,fVATE,FOO,BAR,DEF,A,B,C,D,E,F,G,H,I,DW_USER,DW_SERV,DW_ADMIN,JBOSS_ADMIN"
+    auths = "PUBLIC,PRIVATE,FOO,BAR,DEF,A,B,C,D,E,F,G,H,I,DW_USER,DW_SERV,DW_ADMIN,JBOSS_ADMIN"
     def __init__(self, query : str, cert_path : str = None, key_path : str = None, ca_cert : str = None, key_password : str = None, url : str = None, name : str = None) -> None:
         self.user_query = query
         if not name:
@@ -104,6 +104,8 @@ class Query(object):
 
         if url is not None:
             self.url = url
+        if self.url.endswith("DataWave"):
+            endpoint = "/Query"
 
     def with_url(self, url : str):
         if url is not None:
