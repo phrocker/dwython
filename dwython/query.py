@@ -104,8 +104,10 @@ class Query(object):
 
         if url is not None:
             self.url = url
-        if self.url.endswith("DataWave"):
-            endpoint = "/Query"
+        if self.url.endswith("DataWave/"):
+            self.endpoint = "Query"
+        elif self.url.endswith("DataWave"):
+            self.endpoint = "/Query"
 
     def with_url(self, url : str):
         if url is not None:
