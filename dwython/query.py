@@ -217,7 +217,7 @@ class Query(object):
                 log.info("Received a " + str(response.status_code) + " response code for " + self.current_result_set.query_id + " in " + str(self.current_result_set.operation_time) + " ms")
         self.current_result_set.wall_time = (time.time()-start_time)*1000
         self.current_result_set.page_times.append( self.current_result_set.wall_time )
-        if call_next: ## call next
+        if call_next and self.current_result_set.has_results: ## call next
             log.debug("Calling next on " + self.current_result_set.query_id)
             self.next()
         return self.current_result_set
