@@ -207,13 +207,13 @@ class Query(object):
         self.current_result_set = ResultSet()
         self.current_result_set.reponse_code = response.status_code
         self.current_result_set.session = session
-        if response.status_code == 200:
+        if response.status_code <= 200 and response.status_code < 300:
             decoded_response = response.text
             json_response = json.loads(decoded_response)
             self.current_result_set.has_results = json_response.get('HasResults',False)
             self.current_result_set.query_id = json_response.get('Result',None)
             self.current_result_set.operation_time = json_response.get('OperationTimeMS',0)
-            log.info("Received a 200 response code for " + self.current_result_set.query_id + " in " + str(self.current_result_set.operation_time) + " ms")
+            log.info("Received a " + str(response.status_code) + " response code for " + self.current_result_set.query_id + " in " + str(self.current_result_set.operation_time) + " ms")
         self.current_result_set.wall_time = (time.time()-start_time)*1000
         self.current_result_set.page_times.append( self.current_result_set.wall_time )
         if call_next: ## call next
