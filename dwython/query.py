@@ -194,7 +194,34 @@ class Query(object):
         self.current_result_set.page_times.append( self.current_result_set.wall_time )
         return self.current_result_set
 
-    def create(self, url : str = None):
+    def create(self, call_next: bool = True, url : str = None):
+        if not url:
+            url = self.url + self.endpoint + self.query_logic + "/create"
+        headers = {'content-type': self.default_content_type, 'Accept': self.json_content_type}
+        session = self._load_client()
+        params = urllib.parse.urlencode(self._build_query())
+        start_time = time.time()
+        session.headers.update( headers )
+        response = session.post(url=url, data=params)
+        log.debug("Response code is " + str(response.status_code))
+        self.current_result_set = ResultSet()
+        self.current_result_set.reponse_code = response.status_code
+        self.current_result_set.session = session
+        if response.status_code == 200:
+            decoded_response = response.text
+            json_response = json.loads(decoded_response)
+            self.current_result_set.has_results = json_response.get('HasResults',False)
+            self.current_result_set.query_id = json_response.get('Result',None)
+            self.current_result_set.operation_time = json_response.get('OperationTimeMS',0)
+            log.info("Received a 200 response code for " + self.current_result_set.query_id + " in " + str(self.current_result_set.operation_time) + " ms")
+        self.current_result_set.wall_time = (time.time()-start_time)*1000
+        self.current_result_set.page_times.append( self.current_result_set.wall_time )
+        if call_next: ## call next
+            log.debug("Calling next on " + self.current_result_set.query_id)
+            self.next()
+        return self.current_result_set
+
+    def createAndNext(self, url : str = None):
         if not url:
             url = self.url + self.endpoint + self.query_logic + "/createAndNext"
         headers = {'content-type': self.default_content_type, 'Accept': self.json_content_type}
