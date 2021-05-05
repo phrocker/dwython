@@ -37,7 +37,7 @@ logging.basicConfig(level=logging.DEBUG)
 syntax = args.syntax
 
 if not syntax:
-    syntax = "LUCENE"
+    syntax = "JEXL"
 
 user_query = query.Query(query = query_string,
             cert_path = cert, key_path = key, ca_cert=cacert, key_password=key_pass, url=url ).with_syntax(syntax)

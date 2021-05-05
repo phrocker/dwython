@@ -78,6 +78,8 @@ class Query(object):
     user_query = None
 
     query_name = None
+    
+    page_size = 10
 
     visibility = "BAR&FOO"
 
@@ -85,6 +87,8 @@ class Query(object):
     key_path = None
     ca_cert = None
     key_pass = None
+
+    return_fields = None
 
     endpoint = "DataWave/Query/"
 
@@ -132,6 +136,20 @@ class Query(object):
         self.query_logic = logic
         return self
 
+    def with_page_size(self, psize:  int):
+        self.page_size = psize
+        return self
+    
+    def with_projected_fields(self, *argv):
+        arr = []
+        for arg in argv:
+            arr.append(arg)
+        self.return_fields = ','.join(arr)
+        return self
+
+    def with_return_fields(self, *argv):
+        return self.with_projected_fields(*argv)
+
     def with_syntax(self, syntax: str):
         self.query_syntax = syntax
         return self
@@ -157,14 +175,17 @@ class Query(object):
         return session
 
     def _build_query(self):
-        return { "query" : self.user_query,
+        base_query= { "query" : self.user_query,
                  "queryName" : self.query_name,
                  "begin" : self.begin_date,
                  "end" : self.end_date,
-                 "pagesize": 10,
+                 "pagesize": self.page_size,
                  "query.syntax" : self.query_syntax,
                  "auths" : self.auths,
                  "columnVisibility" : self.visibility}
+        if self.return_fields:
+            base_query["return.fields"] = self.return_fields
+        return base_query
 
     def next(self, url : str = None):
         if not self.current_result_set:
