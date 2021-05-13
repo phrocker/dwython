@@ -165,8 +165,13 @@ class Query(object):
                 url = self.url + self.endpoint + self.current_result_set.query_id + "/close"
             log.info("Closing query " + self.current_result_set.query_id)
             self.current_result_set.session.put(url)
+            self.current_result_set.session.close()
             self.current_result_set.session = None
             self.current_result_set.query_id = None
+        else:
+            if self.current_result_set.session is not None:
+                self.current_result_set.session.close()
+                self.current_result_set.session = None
 
     def _load_client(self):
         session = requests.Session()
@@ -219,15 +224,16 @@ class Query(object):
         if not url:
             url = self.url + self.endpoint + self.query_logic + "/create"
         headers = {'content-type': self.default_content_type, 'Accept': self.json_content_type}
+
+        self.current_result_set = ResultSet()
         session = self._load_client()
+        self.current_result_set.session = session
         params = urllib.parse.urlencode(self._build_query())
         start_time = time.time()
         session.headers.update( headers )
         response = session.post(url=url, data=params)
         log.debug("Response code is " + str(response.status_code))
-        self.current_result_set = ResultSet()
         self.current_result_set.response_code = response.status_code
-        self.current_result_set.session = session
         if response.status_code >= 200 and response.status_code < 300:
             decoded_response = response.text
             if response.text and len(response.text) > 0:
