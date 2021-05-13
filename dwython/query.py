@@ -46,7 +46,7 @@ class ResultSet:
     result_size = 0
     page_times = []
     events = []
-    reponse_code=204
+    response_code=204
     session = None
     def __init__(self) -> None:
         self.operation_time = 0
@@ -159,8 +159,8 @@ class Query(object):
             self.close()
 
     def close(self, url : str = None):
-        # close
-        if self.current_result_set is not None and self.current_result_set.query_id is not None:
+        # close if we have a query ID and the last response code is not a failure.
+        if self.current_result_set is not None and self.current_result_set.query_id is not None and self.current_result_set.response_code < 400:
             if not url:
                 url = self.url + self.endpoint + self.current_result_set.query_id + "/close"
             log.info("Closing query " + self.current_result_set.query_id)
@@ -201,7 +201,7 @@ class Query(object):
         
         log.debug("Response code is " + str(response.status_code))
         self.current_result_set.reset()
-        self.current_result_set.reponse_code = response.status_code
+        self.current_result_set.response_code = response.status_code
         
         if response.status_code == 200:
             decoded_response = response.text
@@ -226,9 +226,9 @@ class Query(object):
         response = session.post(url=url, data=params)
         log.debug("Response code is " + str(response.status_code))
         self.current_result_set = ResultSet()
-        self.current_result_set.reponse_code = response.status_code
+        self.current_result_set.response_code = response.status_code
         self.current_result_set.session = session
-        if response.status_code <= 200 and response.status_code < 300:
+        if response.status_code >= 200 and response.status_code < 300:
             decoded_response = response.text
             if response.text and len(response.text) > 0:
                 json_response = json.loads(decoded_response)
@@ -255,7 +255,7 @@ class Query(object):
         #session.request("POST",url,params, headers)
         log.debug("Response code is " + str(response.status_code))
         self.current_result_set = ResultSet()
-        self.current_result_set.reponse_code = response.status_code
+        self.current_result_set. a  = response.status_code
         self.current_result_set.session = session
         if response.status_code == 200:
             decoded_response = response.text
